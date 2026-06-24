@@ -1,0 +1,62 @@
+name: Test image (émulateur + Appium)
+run-name: Test image émulateur
+
+# Valide GRATUITEMENT l'image sur un runner GitHub (ubuntu-latest = KVM dispo) :
+# build -> lance le conteneur avec /dev/kvm -> attend le boot de l'émulateur
+# -> vérifie qu'Appium répond. À utiliser sur un compte/branche perso.
+on:
+  workflow_dispatch: {}
+  push:
+    branches-ignore:
+      - master   # évite de déclencher cd.yaml (réservé à l'org Trusk)
+
+jobs:
+  test-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Le runner a KVM mais /dev/kvm n'est pas accessible au conteneur par
+      # défaut : on ouvre les permissions via une règle udev.
+      - name: Activer KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm
+
+      - name: Build de l'image
+        run: docker build --platform linux/amd64 -t trusk-android-emulator:ci -f dockerfile .
+
+      - name: Lancer le conteneur (avec /dev/kvm)
+        run: |
+          docker run -d --name emu \
+            --device /dev/kvm \
+            -p 4723:4723 \
+            trusk-android-emulator:ci
+
+      # start.sh ne lance Appium qu'APRÈS le boot complet de l'émulateur :
+      # si /status répond, c'est que l'émulateur a bien booté.
+      - name: Attendre Appium (preuve que l'émulateur a booté)
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:4723/status > /dev/null; then
+              echo "✅ Appium répond — l'émulateur a booté."
+              curl -s http://localhost:4723/status
+              exit 0
+            fi
+            echo "… en attente du boot émulateur ($i/60)"
+            sleep 10
+          done
+          echo "❌ Appium n'a pas démarré dans le temps imparti."
+          exit 1
+
+      - name: Vérifier le device ADB
+        run: docker exec emu adb devices
+
+      - name: Logs du conteneur (toujours)
+        if: always()
+        run: docker logs emu
