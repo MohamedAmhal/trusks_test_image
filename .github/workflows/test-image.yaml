@@ -3,12 +3,13 @@ run-name: Test image émulateur
 
 # Valide GRATUITEMENT l'image sur un runner GitHub (ubuntu-latest = KVM dispo) :
 # build -> lance le conteneur avec /dev/kvm -> attend le boot de l'émulateur
-# -> vérifie qu'Appium répond. À utiliser sur un compte/branche perso.
+# -> vérifie qu'Appium répond.
 on:
   workflow_dispatch: {}
   push:
-    branches-ignore:
-      - master   # évite de déclencher cd.yaml (réservé à l'org Trusk)
+    branches:
+      - master
+      - main
 
 jobs:
   test-image:
