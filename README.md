@@ -4,7 +4,7 @@ Image Docker **émulateur Android + Appium** (implémentation maison, *from
 scratch*) utilisée par les tests end-to-end mobiles (`trusk-automation`) dans
 les workflows Argo sur GKE.
 
-## Contenu de l'image
+## Contenu de l'image :
 
 Construite depuis `ubuntu:22.04`, elle embarque :
 
