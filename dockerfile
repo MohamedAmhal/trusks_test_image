@@ -3,7 +3,7 @@
 # Construit une image autonome contenant : Android SDK, un émulateur Android
 # (API 33 / Android 13), un AVD Pixel 5, le serveur Appium et le driver
 # UIAutomator2. Utilisée par les tests e2e mobiles (trusk-automation) dans Argo.
-#
+# this is a test
 # ⚠️ L'ÉMULATEUR exige /dev/kvm → ne démarre que sur un hôte Linux avec
 # virtualisation imbriquée (nœud GKE). Le BUILD fonctionne partout
 # (on n'exécute pas l'émulateur pendant le build).
